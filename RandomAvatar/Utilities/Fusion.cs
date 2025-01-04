@@ -1,6 +1,10 @@
 ﻿using BoneLib;
 
-namespace RandomAvatar
+using Il2CppSLZ.Marrow;
+
+using UnityEngine;
+
+namespace RandomAvatar.Utilities
 {
     public static class Fusion
     {
@@ -17,6 +21,17 @@ namespace RandomAvatar
         internal static bool Internal_IsConnected()
         {
             return LabFusion.Network.NetworkInfo.HasServer;
+        }
+
+        internal static bool Internal_IsMine(Component comp)
+        {
+            return LabFusion.Extensions.ComponentExtensions.IsPartOfSelf(comp) && LabFusion.Extensions.ComponentExtensions.IsPartOfPlayer(comp);
+        }
+
+        internal static bool IsMine(Component comp)
+        {
+            if (IsConnected()) return Internal_IsMine(comp);
+            return true;
         }
 
         public static bool IsConnected()
