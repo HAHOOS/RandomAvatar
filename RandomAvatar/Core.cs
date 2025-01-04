@@ -14,8 +14,10 @@ using UnityEngine;
 
 using Page = BoneLib.BoneMenu.Page;
 using Il2CppSLZ.Marrow.Warehouse;
-using System.Threading.Tasks;
 using RandomAvatar.Patches;
+using BoneLib.BoneMenu;
+using System;
+using RandomAvatar.Utilities;
 
 namespace RandomAvatar
 {
@@ -40,7 +42,7 @@ namespace RandomAvatar
 
             if (usePCFC)
             {
-                var obj = new GameObject("RandomAvatar");
+                var obj = GameObject.Find("RandomAvatar") ?? new GameObject("RandomAvatar");
                 var comp = obj.AddComponent<PullCordForceChange>();
                 comp.avatarCrate = new AvatarCrateReference(barcode);
                 comp.rigManager = Player.RigManager;
@@ -77,12 +79,19 @@ namespace RandomAvatar
 
         public static bool SwapOnDeath { get; private set; } = false;
 
+        public static bool SwapOnLevelChange { get; private set; } = false;
+
         private void PatchLocalRagdoll()
         {
             HarmonyInstance.Patch(
                 typeof(LabFusion.Player.LocalRagdoll).GetMethod(nameof(LabFusion.Player.LocalRagdoll.Knockout)),
                 postfix: new HarmonyLib.HarmonyMethod(typeof(LocalRagdollPatches).GetMethod(nameof(LocalRagdollPatches.Postfix))));
         }
+
+        public int Delay { get; private set; } = 30;
+        public int Remaining { get; private set; } = 0;
+        private bool switchEvery = false;
+        private FunctionElement RemainingLabel;
 
         public override void OnInitializeMelon()
         {
@@ -109,22 +118,79 @@ namespace RandomAvatar
             modPage.CreateBoolPref("Add effect when switching avatar", Color.magenta, ref Entry_EffectWhenSwitching);
             modPage.CreateFunction("Switch to random avatar", Color.white, SwapToRandom);
 
-            int delay = 10;
             modPage.CreateBlank();
-            modPage.CreateInt("Change Delay", Color.yellow, 30, 10, 10, 3600, (v) => delay = v);
-            modPage.CreateToggleFunction("Switch to random avatar every set seconds", Color.white, async (element) =>
+            modPage.CreateInt("Change Delay", Color.yellow, Delay, 10, 10, 3600, (v) => Delay = v);
+            FunctionElement remainingElement = null;
+            var _switchEvery = modPage.CreateToggleFunction("Switch to random avatar every set seconds", Color.white, null);
+            _switchEvery.Started += () =>
             {
-                while (element.IsRunning)
-                {
-                    SwapToRandom();
-                    await Task.Delay(delay * 1000);
-                }
-            });
+                Remaining = Delay;
+                SwapToRandom();
+                switchEvery = true;
+            };
+            _switchEvery.Cancelled += () => switchEvery = false;
+            remainingElement = modPage.CreateFunction("Time until switch: N/A", Color.white, null);
+            remainingElement.SetProperty(ElementProperties.NoBorder);
+            RemainingLabel = remainingElement;
 
             modPage.CreateBlank();
             modPage.CreateBool("Switch to random avatar on death", Color.cyan, false, (v) => SwapOnDeath = v);
+            modPage.CreateBool("Switch to random avatar on level change", Color.blue, false, (v) => SwapOnLevelChange = v);
+
+            LoggerInstance.Msg("Adding hooks");
+
+            Hooking.OnLevelLoaded += (_) =>
+            {
+                if (SwapOnLevelChange)
+                {
+                    if (PlayerRefs.Instance == null)
+                        return;
+
+                    if (PlayerRefs.Instance.HasRefs)
+                        SwapToRandom();
+                    else
+                        PlayerRefs.Instance.OnRefsComplete += (Action)SwapToRandom;
+                }
+            };
 
             LoggerInstance.Msg("Initialized.");
+        }
+
+        public override void OnFixedUpdate()
+        {
+            TimeUtilities.OnEarlyFixedUpdate();
+        }
+
+        float elapsed = 0f;
+
+        public override void OnUpdate()
+        {
+            TimeUtilities.OnEarlyUpdate();
+
+            if (RemainingLabel != null)
+            {
+                if (switchEvery)
+                {
+                    elapsed += TimeUtilities.DeltaTime;
+                    if (elapsed >= 1f)
+                    {
+                        Remaining--;
+                        elapsed = 0f;
+                    }
+                    if (Remaining <= 0)
+                    {
+                        SwapToRandom();
+                        Remaining = Delay;
+                    }
+                    if (!RemainingLabel.ElementName.EndsWith(Remaining.ToString()))
+                        RemainingLabel.ElementName = $"Time until switch: {Remaining}";
+                }
+                else
+                {
+                    if (!RemainingLabel.ElementName.EndsWith("N/A"))
+                        RemainingLabel.ElementName = "Time until switch: N/A";
+                }
+            }
         }
     }
 }
