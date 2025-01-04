@@ -12,22 +12,26 @@ using RandomAvatar.Helper;
 
 using UnityEngine;
 
-using Page = BoneLib.BoneMenu.Page;
 using Il2CppSLZ.Marrow.Warehouse;
 using RandomAvatar.Patches;
-using BoneLib.BoneMenu;
 using System;
 using RandomAvatar.Utilities;
+using Semver;
+using RandomAvatar.Menu;
 
 namespace RandomAvatar
 {
     public class Core : MelonMod
     {
-        public const string Version = "1.0.0";
+        public const string Version = "1.1.0";
 
         internal static MelonPreferences_Category Preferences_Category { get; private set; }
 
         internal static MelonPreferences_Entry<bool> Entry_UseRedacted, Entry_EffectWhenSwitching;
+
+        internal static MelonLogger.Instance Logger { get; private set; }
+
+        internal static LevelInfo LevelInfo { get; private set; }
 
         public static void SwapAvatar(string barcode, bool usePCFC)
         {
@@ -62,6 +66,7 @@ namespace RandomAvatar
             var avatar = avatars[r.Next(avatars.Count)];
             if (avatar == null) return RandomAvatar(avatars);
             if (!Entry_UseRedacted.Value && avatar.Redacted) return RandomAvatar(avatars);
+            if (!BlacklistWhitelist.IsAvatarAllowed(avatar)) return RandomAvatar(avatars);
             return avatar.Barcode;
         }
 
@@ -77,9 +82,12 @@ namespace RandomAvatar
             SwapAvatar(avatar.ID, Entry_EffectWhenSwitching.Value);
         }
 
-        public static bool SwapOnDeath { get; private set; } = false;
+        public static bool SwapOnDeath { get; internal set; } = false;
 
-        public static bool SwapOnLevelChange { get; private set; } = false;
+        public static bool SwapOnLevelChange { get; internal set; } = false;
+
+        // Used if the level reloads on death and the effect is on
+        public static bool SwapOnNextLevelChange { get; internal set; } = false;
 
         private void PatchLocalRagdoll()
         {
@@ -88,13 +96,53 @@ namespace RandomAvatar
                 postfix: new HarmonyLib.HarmonyMethod(typeof(LocalRagdollPatches).GetMethod(nameof(LocalRagdollPatches.Postfix))));
         }
 
-        public int Delay { get; private set; } = 30;
-        public int Remaining { get; private set; } = 0;
-        private bool switchEvery = false;
-        private FunctionElement RemainingLabel;
+        internal static Thunderstore Thunderstore;
+        internal static Package ThunderstorePackage;
+        internal static bool IsLatestVersion = false;
 
         public override void OnInitializeMelon()
         {
+            Logger = LoggerInstance;
+            try
+            {
+                Thunderstore = new Thunderstore($"RandomAvatar / {Version} A BONELAB Code Mod");
+                ThunderstorePackage = Thunderstore.GetPackage("HAHOOS", "RandomAvatar");
+                if (ThunderstorePackage != null)
+                {
+                    if (ThunderstorePackage.Latest != null && !string.IsNullOrWhiteSpace(ThunderstorePackage.Latest.Version))
+                    {
+                        IsLatestVersion = ThunderstorePackage.IsLatestVersion(Version);
+                        if (!IsLatestVersion)
+                        {
+                            LoggerInstance.Msg(System.Drawing.Color.Aqua, $"A new version of RandomAvatar is available: v{ThunderstorePackage.Latest.Version} while the current is v{Version}");
+                        }
+                        else
+                        {
+                            if (SemVersion.Parse(Version) == ThunderstorePackage.Latest.SemVersion)
+                            {
+                                LoggerInstance.Msg($"Latest version of RandomAvatar is installed! --> v{Version}");
+                            }
+                            else
+                            {
+                                LoggerInstance.Msg($"Beta release of RandomAvatar is installed (v{ThunderstorePackage.Latest.Version} is newest, v{Version} is installed)");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        LoggerInstance.Error("Latest version could not be found or the version is empty");
+                    }
+                }
+                else
+                {
+                    LoggerInstance.Error("Could not find Thunderstore package for RandomAvatar");
+                }
+            }
+            catch (Exception ex)
+            {
+                LoggerInstance.Error($"An unexpected error has occurred while trying to gather thunderstore package information, exception:\n{ex}");
+            }
+
             LoggerInstance.Msg("Setting up preferences");
             Preferences_Category = MelonPreferences.CreateCategory("RandomAvatar");
             Entry_UseRedacted = Preferences_Category.CreateEntry<bool>("UseRedacted", false, "Use Redacted",
@@ -105,55 +153,44 @@ namespace RandomAvatar
             Preferences_Category.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "RandomAvatar.cfg"));
             Preferences_Category.SaveToFile(false);
 
-            LoggerInstance.Msg("Creating BoneMenu");
-
             if (HelperMethods.CheckIfAssemblyLoaded("labfusion"))
             {
                 PatchLocalRagdoll();
             }
 
-            Page authorPage = Page.Root.CreatePage("HAHOOS", Color.white);
-            Page modPage = authorPage.CreatePage("RandomAvatar", Color.magenta);
-            modPage.CreateBoolPref("Use Redacted Avatars", Color.cyan, ref Entry_UseRedacted);
-            modPage.CreateBoolPref("Add effect when switching avatar", Color.magenta, ref Entry_EffectWhenSwitching);
-            modPage.CreateFunction("Switch to random avatar", Color.white, SwapToRandom);
+            LoggerInstance.Msg("Setting up blacklist/whitelist");
+            BlacklistWhitelist.Setup();
 
-            modPage.CreateBlank();
-            modPage.CreateInt("Change Delay", Color.yellow, Delay, 10, 10, 3600, (v) => Delay = v);
-            FunctionElement remainingElement = null;
-            var _switchEvery = modPage.CreateToggleFunction("Switch to random avatar every set seconds", Color.white, null);
-            _switchEvery.Started += () =>
-            {
-                Remaining = Delay;
-                SwapToRandom();
-                switchEvery = true;
-            };
-            _switchEvery.Cancelled += () => switchEvery = false;
-            remainingElement = modPage.CreateFunction("Time until switch: N/A", Color.white, null);
-            remainingElement.SetProperty(ElementProperties.NoBorder);
-            RemainingLabel = remainingElement;
+            LoggerInstance.Msg("Creating BoneMenu");
 
-            modPage.CreateBlank();
-            modPage.CreateBool("Switch to random avatar on death", Color.cyan, false, (v) => SwapOnDeath = v);
-            modPage.CreateBool("Switch to random avatar on level change", Color.blue, false, (v) => SwapOnLevelChange = v);
+            BoneMenu.Setup();
 
             LoggerInstance.Msg("Adding hooks");
 
-            Hooking.OnLevelLoaded += (_) =>
+            Hooking.OnLevelLoaded += (info) =>
             {
-                if (SwapOnLevelChange)
-                {
-                    if (PlayerRefs.Instance == null)
-                        return;
-
-                    if (PlayerRefs.Instance.HasRefs)
-                        SwapToRandom();
-                    else
-                        PlayerRefs.Instance.OnRefsComplete += (Action)SwapToRandom;
-                }
+                LevelInfo = info;
+                if (!Fusion.IsConnected())
+                    LevelLoaded();
             };
 
             LoggerInstance.Msg("Initialized.");
+        }
+
+        internal static void LevelLoaded()
+        {
+            if (SwapOnLevelChange || SwapOnNextLevelChange)
+            {
+                if (PlayerRefs.Instance == null)
+                    return;
+
+                SwapOnNextLevelChange = false;
+
+                if (PlayerRefs.Instance.HasRefs)
+                    SwapToRandom();
+                else
+                    PlayerRefs.Instance.OnRefsComplete += (Action)SwapToRandom;
+            }
         }
 
         public override void OnFixedUpdate()
@@ -161,36 +198,10 @@ namespace RandomAvatar
             TimeUtilities.OnEarlyFixedUpdate();
         }
 
-        float elapsed = 0f;
-
         public override void OnUpdate()
         {
             TimeUtilities.OnEarlyUpdate();
-
-            if (RemainingLabel != null)
-            {
-                if (switchEvery)
-                {
-                    elapsed += TimeUtilities.DeltaTime;
-                    if (elapsed >= 1f)
-                    {
-                        Remaining--;
-                        elapsed = 0f;
-                    }
-                    if (Remaining <= 0)
-                    {
-                        SwapToRandom();
-                        Remaining = Delay;
-                    }
-                    if (!RemainingLabel.ElementName.EndsWith(Remaining.ToString()))
-                        RemainingLabel.ElementName = $"Time until switch: {Remaining}";
-                }
-                else
-                {
-                    if (!RemainingLabel.ElementName.EndsWith("N/A"))
-                        RemainingLabel.ElementName = "Time until switch: N/A";
-                }
-            }
+            BoneMenu.Update();
         }
     }
 }

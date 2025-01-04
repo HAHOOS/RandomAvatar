@@ -5,7 +5,7 @@ using BoneLib.BoneMenu;
 
 using UnityEngine;
 
-namespace RandomAvatar.Menu
+namespace RandomAvatar.Menu.Elements
 {
     /// <summary>
     /// An element for <see cref="BoneLib.BoneMenu"/> that makes it able to toggle functions easily
@@ -87,8 +87,8 @@ namespace RandomAvatar.Menu
             OnColor = onColor;
             Element = new FunctionElement(name, offColor, () =>
             {
-                if (this.IsRunning) this.Cancel();
-                else this.Start();
+                if (IsRunning) Cancel();
+                else Start();
             });
         }
 
@@ -105,8 +105,8 @@ namespace RandomAvatar.Menu
             OnColor = Color.red;
             Element = new FunctionElement(name, offColor, () =>
             {
-                if (this.IsRunning) this.Cancel();
-                else this.Start();
+                if (IsRunning) Cancel();
+                else Start();
             });
         }
     }

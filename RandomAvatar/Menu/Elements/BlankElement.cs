@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace RandomAvatar.Menu
+namespace RandomAvatar.Menu.Elements
 {
     /// <summary>
     /// Element that basically makes an blank space

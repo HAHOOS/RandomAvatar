@@ -7,7 +7,7 @@ using RandomAvatar;
 
 #region MelonLoader
 
-[assembly: MelonInfo(typeof(Core), "RandomAvatar", "1.0.0", "HAHOOS", "https://thunderstore.io/c/bonelab/p/HAHOOS/RandomAvatar")]
+[assembly: MelonInfo(typeof(Core), "RandomAvatar", Core.Version, "HAHOOS", "https://thunderstore.io/c/bonelab/p/HAHOOS/RandomAvatar")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
 [assembly: MelonColor(0, 255, 0, 255)]
 [assembly: MelonAuthorColor(0, 255, 165, 0)]

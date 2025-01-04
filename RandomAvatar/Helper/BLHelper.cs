@@ -2,13 +2,12 @@
 using BoneLib.BoneMenu;
 using BoneLib.Notifications;
 
-using RandomAvatar.Menu;
-
 using MelonLoader;
 
 using System;
 
 using UnityEngine;
+using RandomAvatar.Menu.Elements;
 
 namespace RandomAvatar.Helper
 {
@@ -22,104 +21,109 @@ namespace RandomAvatar.Helper
 
         private readonly static MelonPreferences_Category prefs = Core.Preferences_Category;
 
-        internal static IntElement CreateIntPref(this Page page, string name, Color color, ref MelonPreferences_Entry<int> value, int increment, int minValue, int maxValue, Action<int> callback = null, string prefName = null, int prefDefaultValue = default)
+        internal static IntElement CreateIntPref(this Page page, string name, Color color, ref MelonPreferences_Entry<int> value, int increment, int minValue, int maxValue, MelonPreferences_Category category = null, Action<int> callback = null, string prefName = null, int prefDefaultValue = default)
         {
-            if (value == null || !prefs.HasEntry(value.Identifier))
+            category ??= prefs;
+            if (value == null || !category.HasEntry(value.Identifier))
             {
                 prefName ??= name;
 
-                if (!prefs.HasEntry(prefName))
-                    value = prefs.CreateEntry(prefName, prefDefaultValue);
+                if (!category.HasEntry(prefName))
+                    value = category.CreateEntry(prefName, prefDefaultValue);
             }
             MelonPreferences_Entry<int> val = value;
             var element = page.CreateInt(name, color, val.Value, increment, minValue, maxValue, (x) =>
             {
                 val.Value = x;
-                prefs.SaveToFile(false);
+                category.SaveToFile(false);
                 callback?.InvokeActionSafe(x);
             });
-            if (string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
+            if (!string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
             return element;
         }
 
-        internal static FloatElement CreateFloatPref(this Page page, string name, Color color, ref MelonPreferences_Entry<float> value, float increment, float minValue, float maxValue, Action<float> callback = null, string prefName = null, float prefDefaultValue = default)
+        internal static FloatElement CreateFloatPref(this Page page, string name, Color color, ref MelonPreferences_Entry<float> value, float increment, float minValue, float maxValue, MelonPreferences_Category category = null, Action<float> callback = null, string prefName = null, float prefDefaultValue = default)
         {
-            if (value == null || !prefs.HasEntry(value.Identifier))
+            category ??= prefs;
+            if (value == null || !category.HasEntry(value.Identifier))
             {
                 prefName ??= name;
 
-                if (!prefs.HasEntry(prefName))
-                    value = prefs.CreateEntry(prefName, prefDefaultValue);
+                if (!category.HasEntry(prefName))
+                    value = category.CreateEntry(prefName, prefDefaultValue);
             }
             MelonPreferences_Entry<float> val = value;
             var element = page.CreateFloat(name, color, val.Value, increment, minValue, maxValue, (x) =>
             {
                 val.Value = x;
-                prefs.SaveToFile(false);
+                category.SaveToFile(false);
                 callback?.InvokeActionSafe(x);
             });
-            if (string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
+            if (!string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
             return element;
         }
 
-        internal static BoolElement CreateBoolPref(this Page page, string name, Color color, ref MelonPreferences_Entry<bool> value, Action<bool> callback = null, string prefName = null, bool prefDefaultValue = default)
+        internal static BoolElement CreateBoolPref(this Page page, string name, Color color, ref MelonPreferences_Entry<bool> value, MelonPreferences_Category category = null, Action<bool> callback = null, string prefName = null, bool prefDefaultValue = default)
         {
-            if (value == null || !prefs.HasEntry(value.Identifier))
+            category ??= prefs;
+            if (value == null || !category.HasEntry(value.Identifier))
             {
                 prefName ??= name;
 
-                if (!prefs.HasEntry(prefName))
-                    value = prefs.CreateEntry(prefName, prefDefaultValue);
+                if (!category.HasEntry(prefName))
+                    value = category.CreateEntry(prefName, prefDefaultValue);
             }
             MelonPreferences_Entry<bool> val = value;
             var element = page.CreateBool(name, color, val.Value, (x) =>
             {
                 val.Value = x;
-                prefs.SaveToFile(false);
+                category.SaveToFile(false);
                 callback?.InvokeActionSafe(x);
             });
-            if (string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
+            if (!string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
             return element;
         }
 
-        internal static EnumElement CreateEnumPref<T>(this Page page, string name, Color color, ref MelonPreferences_Entry<T> value, Action<Enum> callback = null, string prefName = null, Enum prefDefaultValue = default) where T : Enum
+        internal static EnumElement CreateEnumPref<T>(this Page page, string name, Color color, ref MelonPreferences_Entry<T> value, MelonPreferences_Category category = null, Action<Enum> callback = null, string prefName = null, Enum prefDefaultValue = default) where T : Enum
         {
-            if (value == null || !prefs.HasEntry(value.Identifier))
+            category ??= prefs;
+            if (value == null || !category.HasEntry(value.Identifier))
             {
                 prefName ??= name;
 
-                if (!prefs.HasEntry(prefName))
-                    value = prefs.CreateEntry(prefName, (T)prefDefaultValue);
+                if (!category.HasEntry(prefName))
+                    value = category.CreateEntry(prefName, (T)prefDefaultValue);
             }
             MelonPreferences_Entry<T> val = value;
             var element = page.CreateEnum(name, color, val.Value, (x) =>
             {
                 val.Value = (T)x;
-                prefs.SaveToFile(false);
+                category.SaveToFile(false);
                 callback?.InvokeActionSafe(x);
             });
-            if (string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
+            if (!string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
             return element;
         }
 
-        internal static StringElement CreateStringPref(this Page page, string name, Color color, ref MelonPreferences_Entry<string> value, Action<string> callback = null, string prefName = null, string prefDefaultValue = default)
+        internal static StringElement CreateStringPref(this Page page, string name, Color color, ref MelonPreferences_Entry<string> value, MelonPreferences_Category category = null, Action<string> callback = null, string prefName = null, string prefDefaultValue = default)
         {
-            if (value == null || !prefs.HasEntry(value.Identifier))
+            category ??= prefs;
+            if (value == null || !category.HasEntry(value.Identifier))
             {
                 prefName ??= name;
 
-                if (!prefs.HasEntry(prefName))
-                    value = prefs.CreateEntry(prefName, prefDefaultValue);
+                if (!category.HasEntry(prefName))
+                    value = category.CreateEntry(prefName, prefDefaultValue);
             }
             MelonPreferences_Entry<string> val = value;
             StringElement element = page.CreateString(name, color, val.Value, (x) =>
             {
                 val.Value = x;
-                prefs.SaveToFile(false);
+                category.SaveToFile(false);
                 callback?.InvokeActionSafe(x);
             });
             element.Value = value.Value; //BoneMenu temp hack fix
-            if (string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
+            if (!string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
             return element;
         }
 
