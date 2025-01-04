@@ -10,7 +10,4 @@ If you really want to make your game perhaps more fun, consider using the option
 - Switching your avatar to a random one with a set interval (for example, every 30 seconds)
 - Switching avatar on level change, as well as on death
 - Changing into redacted avatars, if you really really want to, you can turn on an option to include redacted avatars.
-
-## Planned
-
-- Blacklisting/whitelisting avatar groups
+- Blacklisting/whitelisting avatar groups/tags
