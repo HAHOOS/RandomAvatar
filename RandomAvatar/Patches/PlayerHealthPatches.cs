@@ -16,11 +16,13 @@ namespace RandomAvatar.Patches
             if (!Fusion.IsMine(__instance))
                 return;
 
+            if (!Core.SwapOnDeath)
+                return;
+
             if (Core.Entry_EffectWhenSwitching.Value && PlayerMarkerPatches.Instance != null && (!PlayerMarkerPatches.Instance.TryGetComponent<PlayerHealthDecorator>(out PlayerHealthDecorator decorator) || !decorator._reloadLevelOnDeath))
                 Core.SwapOnNextLevelChange = true;
 
-            if (Core.SwapOnDeath)
-                Core.SwapToRandom();
+            Core.SwapToRandom();
         }
     }
 }

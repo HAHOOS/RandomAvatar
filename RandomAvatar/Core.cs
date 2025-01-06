@@ -1,5 +1,4 @@
-﻿using Il2CppSystem.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 
 using BoneLib;
 
@@ -18,20 +17,24 @@ using System;
 using RandomAvatar.Utilities;
 using Semver;
 using RandomAvatar.Menu;
+using System.Collections.Generic;
 
 namespace RandomAvatar
 {
     public class Core : MelonMod
     {
-        public const string Version = "1.1.0";
+        public const string Version = "1.2.0";
 
         internal static MelonPreferences_Category Preferences_Category { get; private set; }
 
-        internal static MelonPreferences_Entry<bool> Entry_UseRedacted, Entry_EffectWhenSwitching;
+        internal static MelonPreferences_Entry<bool> Entry_UseRedacted, Entry_EffectWhenSwitching, Entry_AllowRandomAvatarInYourLobbies;
+        internal static MelonPreferences_Entry<int> Entry_MinimumFusionDelay;
 
         internal static MelonLogger.Instance Logger { get; private set; }
 
         internal static LevelInfo LevelInfo { get; private set; }
+
+        internal static Dictionary<DateTimeOffset, AvatarCrate> _avatarHistory = [];
 
         public static void SwapAvatar(string barcode, bool usePCFC)
         {
@@ -59,14 +62,27 @@ namespace RandomAvatar
             }
         }
 
-        public static Barcode RandomAvatar(List<AvatarCrate> avatars = null)
+        public static Barcode RandomAvatar()
         {
+            if (BlacklistWhitelist.Enabled.Value && ((BlacklistWhitelist.TagsList.Value == null || BlacklistWhitelist.TagsList.Value.Count == 0) && (BlacklistWhitelist.AvatarList.Value == null || BlacklistWhitelist.AvatarList.Value.Count == 0) && (BlacklistWhitelist.PalletList.Value == null || BlacklistWhitelist.PalletList.Value.Count == 0)))
+            {
+                BLHelper.SendNotification("Failure", "When having blacklist/whitelist enabled, you need to have at least one tag, avatar and/or pallet selected!", true, 3f, BoneLib.Notifications.NotificationType.Error);
+                Logger.Error("Cannot swap to random avatar. When having blacklist/whitelist enabled, you need to have at least one tag, avatar and/or pallet selected!");
+                return null;
+            }
+
             var r = new System.Random();
-            avatars ??= AssetWarehouse.Instance.GetCrates<AvatarCrate>();
+            var avatars = AssetWarehouse.Instance.GetCrates<AvatarCrate>();
+            avatars.RemoveAll((Il2CppSystem.Predicate<AvatarCrate>)(x =>
+            {
+                if (x == null) return true;
+                if (!Entry_UseRedacted.Value && x.Redacted) return true;
+                if (!BlacklistWhitelist.IsAvatarAllowed(x)) return true;
+                return false;
+            }));
             var avatar = avatars[r.Next(avatars.Count)];
-            if (avatar == null) return RandomAvatar(avatars);
-            if (!Entry_UseRedacted.Value && avatar.Redacted) return RandomAvatar(avatars);
-            if (!BlacklistWhitelist.IsAvatarAllowed(avatar)) return RandomAvatar(avatars);
+            _avatarHistory.Add(DateTimeOffset.Now, avatar);
+            BoneMenu.SetupHistoryPage();
             return avatar.Barcode;
         }
 
@@ -78,7 +94,26 @@ namespace RandomAvatar
                 return;
             }
 
+            if (!Fusion.IsAllowed())
+            {
+                BLHelper.SendNotification("Disallowed", "The host of this server has disabled the usage of RandomAvatar, cannot change you into a random avatar", true, 3.5f, BoneLib.Notifications.NotificationType.Error);
+                return;
+            }
+
+            if (BoneMenu.Cooldown > 0)
+            {
+                BLHelper.SendNotification("Cooldown", $"Wait {BoneMenu.Cooldown} more seconds", true, 1.5f, BoneLib.Notifications.NotificationType.Warning);
+                return;
+            }
+
             var avatar = RandomAvatar();
+
+            if (avatar == null)
+                return;
+
+            if (Fusion.IsConnected())
+                BoneMenu.Cooldown = BoneMenu.MinimumDelay;
+
             SwapAvatar(avatar.ID, Entry_EffectWhenSwitching.Value);
         }
 
@@ -89,11 +124,14 @@ namespace RandomAvatar
         // Used if the level reloads on death and the effect is on
         public static bool SwapOnNextLevelChange { get; internal set; } = false;
 
-        private void PatchLocalRagdoll()
+        private void PatchFusion()
         {
             HarmonyInstance.Patch(
                 typeof(LabFusion.Player.LocalRagdoll).GetMethod(nameof(LabFusion.Player.LocalRagdoll.Knockout)),
                 postfix: new HarmonyLib.HarmonyMethod(typeof(LocalRagdollPatches).GetMethod(nameof(LocalRagdollPatches.Postfix))));
+            HarmonyInstance.Patch(
+                typeof(LabFusion.FusionMod).GetMethod(nameof(LabFusion.FusionMod.OnMainSceneInitializeDelayed)),
+                postfix: new HarmonyLib.HarmonyMethod(typeof(FusionPatches).GetMethod(nameof(FusionPatches.Postfix))));
         }
 
         internal static Thunderstore Thunderstore;
@@ -149,13 +187,19 @@ namespace RandomAvatar
                 description: "If true, when switching to random avatar the mod will also include redacted avatars");
             Entry_EffectWhenSwitching = Preferences_Category.CreateEntry<bool>("EffectWhenSwitching", true, "Effect When Switching",
                 description: "If true, when switching to random avatar there will be an effect with the Pull Cord Device like when going into an area in a level that changes your avatar");
+            Entry_AllowRandomAvatarInYourLobbies = Preferences_Category.CreateEntry<bool>("AllowRandomAvatarInYourLobbies", true, "Allow Random Avatar In Your Lobbies",
+                description: "If true, random avatar will work for players when you create your lobby/server, if false they won't be able to use it on versions after 1.1.0");
+            Entry_MinimumFusionDelay = Preferences_Category.CreateEntry<int>("MinimumFusionDelay", Fusion.FusionDelay, "Minimum Fusion Delay",
+                description: "The minimum delay value (in seconds) for all players using RandomAvatar on versions after 1.1.0");
 
             Preferences_Category.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "RandomAvatar.cfg"));
             Preferences_Category.SaveToFile(false);
 
             if (HelperMethods.CheckIfAssemblyLoaded("labfusion"))
             {
-                PatchLocalRagdoll();
+                LoggerInstance.Msg("Setting up Fusion");
+                PatchFusion();
+                Fusion.Setup();
             }
 
             LoggerInstance.Msg("Setting up blacklist/whitelist");

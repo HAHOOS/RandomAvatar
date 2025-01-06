@@ -8,8 +8,6 @@ namespace RandomAvatar.Patches
     [HarmonyPatch]
     public static class ModConsolePatches
     {
-        public static bool Ignore = true;
-
         static MethodBase TargetMethod()
         {
             var type = AccessTools.TypeByName("BoneLib.ModConsole");
@@ -26,7 +24,7 @@ namespace RandomAvatar.Patches
 
         public static bool Prefix(string txt)
         {
-            return txt != "Mod Console";
+            return txt != "Remove Element";
         }
     }
 }

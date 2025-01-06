@@ -7,7 +7,7 @@ namespace RandomAvatar.Patches
     [HarmonyPatch(typeof(PlayerMarker))]
     public static class PlayerMarkerPatches
     {
-        public static PlayerMarker Instance;
+        public static PlayerMarker Instance { get; private set; }
 
         [HarmonyPatch(nameof(PlayerMarker.Awake))]
         public static void Postfix(PlayerMarker __instance)

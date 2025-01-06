@@ -46,20 +46,8 @@
 		<Reference Include="0Harmony">
 			<HintPath>$(GameDirectory)\MelonLoader\net6\0Harmony.dll</HintPath>
 		</Reference>
-		<Reference Include="Il2CppSLZ.ModIO">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppSLZ.ModIO.dll</HintPath>
-		</Reference>
 		<Reference Include="UnityEngine.CoreModule">
 			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine.PhysicsModule">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.PhysicsModule.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine.ImageConversionModule">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.ImageConversionModule.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine.AssetBundleModule">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.AssetBundleModule.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 
