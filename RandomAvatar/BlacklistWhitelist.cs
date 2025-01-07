@@ -62,17 +62,6 @@ namespace RandomAvatar
 
             Category.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "RandomAvatar.cfg"));
             Category.SaveToFile(false);
-
-            if (AssetWarehouse.ready)
-                Hooks();
-            else
-                Hooking.OnWarehouseReady += Hooks;
-        }
-
-        private static void Hooks()
-        {
-            AssetWarehouse.Instance.OnChanged += (Il2CppSystem.Action)(() => { refreshRequired = true; SetupPage(); });
-            AssetWarehouse.Instance.OnCrateAdded += (Il2CppSystem.Action<Barcode>)((_) => { refreshRequired = true; SetupPage(); });
         }
 
         internal static bool refreshRequired = false;
