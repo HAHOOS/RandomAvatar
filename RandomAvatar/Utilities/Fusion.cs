@@ -12,7 +12,7 @@ namespace RandomAvatar.Utilities
     {
         internal const string Allow_MetadataKey = "RandomAvatar.Allow";
         internal const string Delay_MetadataKey = "RandomAvatar.Delay";
-        internal const int FusionDelay = 60;
+        internal const int FusionDelay = 45;
         internal const int DefaultDelay = BoneMenu._rmd;
 
         internal static Action ServerChanged;

@@ -23,7 +23,7 @@ namespace RandomAvatar
 {
     public class Core : MelonMod
     {
-        public const string Version = "1.2.0";
+        public const string Version = "1.2.1";
 
         internal static MelonPreferences_Category Preferences_Category { get; private set; }
 
@@ -124,6 +124,8 @@ namespace RandomAvatar
         // Used if the level reloads on death and the effect is on
         public static bool SwapOnNextLevelChange { get; internal set; } = false;
 
+        public static bool SwapOnDamaged { get; internal set; } = false;
+
         private void PatchFusion()
         {
             HarmonyInstance.Patch(
@@ -201,6 +203,10 @@ namespace RandomAvatar
                 PatchFusion();
                 Fusion.Setup();
             }
+            else
+            {
+                LoggerInstance.Warning("Fusion was not found");
+            }
 
             LoggerInstance.Msg("Setting up blacklist/whitelist");
             BlacklistWhitelist.Setup();
@@ -217,6 +223,8 @@ namespace RandomAvatar
                 if (!Fusion.IsConnected())
                     LevelLoaded();
             };
+
+            LoggerInstance.Warning($"Note for code modders: This mod modifies certain behaviors of BoneLib to improve performance and fix certain issues. Currently affected are BoneLib logging (prevents \"Remove Element\" from being sent to improve performance) and keyboard (fixes an issue that might make the string element persistent in every page, aka appear on every page)");
 
             LoggerInstance.Msg("Initialized.");
         }

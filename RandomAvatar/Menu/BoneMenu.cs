@@ -131,9 +131,10 @@ namespace RandomAvatar.Menu
 
             UpdateRepeating();
 
-            ChallengesPage = ModPage.CreatePage("Challenges", Color.yellow, 2);
+            ChallengesPage = ModPage.CreatePage("Challenges", Color.yellow, 3);
             ChallengesPage.CreateBool("Switch to random avatar on death", Color.cyan, false, (v) => Core.SwapOnDeath = v);
             ChallengesPage.CreateBool("Switch to random avatar on level change", Color.yellow, false, (v) => Core.SwapOnLevelChange = v);
+            ChallengesPage.CreateBool("Switch to random avatar on damaged", Color.magenta, false, (v) => Core.SwapOnDamaged = v);
 
             if (HelperMethods.CheckIfAssemblyLoaded("labfusion"))
             {
@@ -178,15 +179,15 @@ namespace RandomAvatar.Menu
 
         internal static void SetupTagsPage(AvatarCrate crate)
         {
-            BlacklistWhitelist.refreshRequired = true;
-            BlacklistWhitelist.SetupTagsPage(true);
-            BlacklistWhitelist.CleanupPage(AvatarHistoryTagsPage);
+            BlacklistWhitelist.SetupTagsPage();
+            BlacklistWhitelist.CleanupPage(AvatarHistoryTagsPage, false);
             if (crate.Tags.Count <= 0)
             {
                 AvatarHistoryTagsPage.CreateLabel("Nothing to show here :(", Color.white);
             }
             else
             {
+                Dictionary<string, int> tags = [];
                 crate.Tags.ForEach((System.Action<string>)(x =>
                 {
                     if (string.IsNullOrWhiteSpace(x))
@@ -196,17 +197,22 @@ namespace RandomAvatar.Menu
                     //    return;
 
                     int amount = BlacklistWhitelist.Tags.ContainsKey(x) ? BlacklistWhitelist.Tags[x] : 0;
+                    tags.Add(x, amount);
+                }));
+                tags = tags.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+                tags.ForEach((System.Action<KeyValuePair<string, int>>)(x =>
+                {
                     FunctionElement element = null;
-                    element = AvatarHistoryTagsPage.CreateFunction($"{x} [{amount}]", BlacklistWhitelist.TagsList.Value.Contains(x) ? new Color(0, 1, 0) : Color.red, () =>
+                    element = AvatarHistoryTagsPage.CreateFunction($"{x.Key} [{x.Value}]", BlacklistWhitelist.TagsList.Value.Contains(x.Key) ? new Color(0, 1, 0) : Color.red, () =>
                     {
-                        if (BlacklistWhitelist.TagsList.Value.Contains(x))
+                        if (BlacklistWhitelist.TagsList.Value.Contains(x.Key))
                         {
-                            BlacklistWhitelist.TagsList.Value.Remove(x);
+                            BlacklistWhitelist.TagsList.Value.Remove(x.Key);
                             element.ElementColor = Color.red;
                         }
                         else
                         {
-                            BlacklistWhitelist.TagsList.Value.Add(x);
+                            BlacklistWhitelist.TagsList.Value.Add(x.Key);
                             element.ElementColor = new Color(0, 1, 0);
                         }
                         BlacklistWhitelist.Category.SaveToFile(false);
@@ -217,12 +223,14 @@ namespace RandomAvatar.Menu
 
         internal static void SetupPageForAvatar(DateTimeOffset offset, AvatarCrate crate)
         {
+            BlacklistWhitelist.SetupPalletsPage();
             AvatarHistoryPage.Name = crate.Title;
             AvatarHistoryPage.RemoveAll();
             AvatarHistoryPage.CreateFunction(crate.Title, Color.white, null);
             AvatarHistoryPage.CreateFunction(crate.Barcode.ID, Color.white, null);
+            AvatarHistoryPage.CreateFunction("Change into avatar", Color.cyan, () => Core.SwapAvatar(crate.Barcode.ID, Core.Entry_EffectWhenSwitching.Value));
             FunctionElement palletElement = null;
-            palletElement = AvatarHistoryPage.CreateFunction(crate.Pallet.Title, BlacklistWhitelist.PalletList.Value.Contains(crate.Pallet.Barcode.ID) ? new Color(0, 1, 0) : Color.red, () =>
+            palletElement = AvatarHistoryPage.CreateFunction($"{crate.Pallet.Title} [{BlacklistWhitelist.PalletRefs.FirstOrDefault(x => x.Pallet.Barcode == crate.Pallet.Barcode).Avatars.Count.ToString() ?? "0"}]", BlacklistWhitelist.PalletList.Value.Contains(crate.Pallet.Barcode.ID) ? new Color(0, 1, 0) : Color.red, () =>
             {
                 if (BlacklistWhitelist.PalletList.Value.Contains(crate.Pallet.Barcode.ID))
                 {
@@ -241,7 +249,7 @@ namespace RandomAvatar.Menu
                 SetupTagsPage(crate);
                 BoneLib.BoneMenu.Menu.OpenPage(AvatarHistoryTagsPage);
             });
-            AvatarHistoryPage.CreateFunction($"Time: {offset.ToString("T")}", Color.white, null);
+            AvatarHistoryPage.CreateFunction($"Time: {offset:T}", Color.white, null);
             FunctionElement element = null;
             element = AvatarHistoryPage.CreateFunction(BlacklistWhitelist.AvatarList.Value.Contains(crate.Barcode.ID) ? (BlacklistWhitelist.IsWhitelist.Value ? "Whitelisted" : "Blacklisted") : (BlacklistWhitelist.IsWhitelist.Value ? "Not Whitelisted" : "Not Blacklisted"), BlacklistWhitelist.AvatarList.Value.Contains(crate.Barcode.ID) ? new Color(0, 1, 0) : Color.red, () =>
             {
