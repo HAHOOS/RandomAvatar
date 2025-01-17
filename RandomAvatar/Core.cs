@@ -224,8 +224,6 @@ namespace RandomAvatar
                     LevelLoaded();
             };
 
-            LoggerInstance.Warning($"Note for code modders: This mod modifies certain behaviors of BoneLib to improve performance and fix certain issues. Currently affected are BoneLib logging (prevents \"Remove Element\" from being sent to improve performance) and keyboard (fixes an issue that might make the string element persistent in every page, aka appear on every page)");
-
             LoggerInstance.Msg("Initialized.");
         }
 
