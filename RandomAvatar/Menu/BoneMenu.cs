@@ -124,7 +124,7 @@ namespace RandomAvatar.Menu
 
             HistoryPage = ModPage.CreatePage("History", Color.yellow, 10);
             AvatarHistoryPage = HistoryPage.CreatePage("Placeholder", Color.white, 0, false);
-            AvatarHistoryTagsPage = HistoryPage.CreatePage("Tags", Color.red, 0, false);
+            AvatarHistoryTagsPage = AvatarHistoryPage.CreatePage("Tags", Color.red, 0, false);
             SetupHistoryPage();
 
             RepeatingPage = ModPage.CreatePage("Repeating", Color.red, 4);
