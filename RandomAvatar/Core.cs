@@ -1,23 +1,25 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 
 using BoneLib;
 
+using Harmony;
+
 using Il2CppSLZ.Bonelab;
+using Il2CppSLZ.Marrow.Warehouse;
 
 using MelonLoader;
 using MelonLoader.Utils;
 
 using RandomAvatar.Helper;
+using RandomAvatar.Menu;
+using RandomAvatar.Patches;
+using RandomAvatar.Utilities;
+
+using Semver;
 
 using UnityEngine;
-
-using Il2CppSLZ.Marrow.Warehouse;
-using RandomAvatar.Patches;
-using System;
-using RandomAvatar.Utilities;
-using Semver;
-using RandomAvatar.Menu;
-using System.Collections.Generic;
 
 namespace RandomAvatar
 {
@@ -53,7 +55,7 @@ namespace RandomAvatar
                 var comp = obj.AddComponent<PullCordForceChange>();
                 comp.avatarCrate = new AvatarCrateReference(barcode);
                 comp.rigManager = Player.RigManager;
-                Fusion.SendPullCordEffect();
+                //Fusion.SendPullCordEffect();
                 comp.ForceChange(comp.rigManager.gameObject);
             }
             else
@@ -100,7 +102,8 @@ namespace RandomAvatar
                 return;
             }
 
-            if (BoneMenu.Cooldown > 0)
+            // It is 1.5 instead of 0 to avoid issues with the repeating change being incorrectly hit by the cooldown
+            if (BoneMenu.Cooldown > 1.5)
             {
                 BLHelper.SendNotification("Cooldown", $"Wait {BoneMenu.Cooldown} more seconds", true, 1.5f, BoneLib.Notifications.NotificationType.Warning);
                 return;
@@ -129,7 +132,10 @@ namespace RandomAvatar
         private void PatchFusion()
         {
             HarmonyInstance.Patch(
-                typeof(LabFusion.Player.LocalRagdoll).GetMethod(nameof(LabFusion.Player.LocalRagdoll.Knockout)),
+                typeof(LabFusion.Player.LocalRagdoll).GetMethod(nameof(LabFusion.Player.LocalRagdoll.Knockout), [typeof(float)]),
+                postfix: new HarmonyLib.HarmonyMethod(typeof(LocalRagdollPatches).GetMethod(nameof(LocalRagdollPatches.Postfix))));
+            HarmonyInstance.Patch(
+                typeof(LabFusion.Player.LocalRagdoll).GetMethod(nameof(LabFusion.Player.LocalRagdoll.Knockout), [typeof(float), typeof(bool)]),
                 postfix: new HarmonyLib.HarmonyMethod(typeof(LocalRagdollPatches).GetMethod(nameof(LocalRagdollPatches.Postfix))));
             HarmonyInstance.Patch(
                 typeof(LabFusion.FusionMod).GetMethod(nameof(LabFusion.FusionMod.OnMainSceneInitializeDelayed)),

@@ -159,12 +159,12 @@ namespace RandomAvatar
 
         public static void CleanupPage(BoneLib.BoneMenu.Page page, bool onlySubPages = false, bool removeSubPages = true, bool removeMainPage = false)
         {
-            Dictionary<BoneLib.BoneMenu.Page, List<Element>> elements = new();
+            Dictionary<BoneLib.BoneMenu.Page, List<Element>> elements = [];
             page.SubPages.ForEach(subPage =>
             {
                 if (subPage != null && subPage.Elements?.Count > 0)
                 {
-                    elements.Add(subPage, new List<Element>(subPage.Elements));
+                    elements.Add(subPage, [.. subPage.Elements]);
                 }
             });
             foreach (var p in elements)
@@ -194,7 +194,7 @@ namespace RandomAvatar
             {
                 if (subPage != null && subPage.Elements?.Count > 0)
                 {
-                    if (removeSubPages && page.SubPages.Count != 1) subPage.Remove([element]);
+                    if (removeSubPages /*&& page.SubPages.Count != 1*/) subPage.Remove([element]);
                     else subPage.Remove(element);
                 }
             });

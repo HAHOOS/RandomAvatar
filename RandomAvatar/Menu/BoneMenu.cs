@@ -155,27 +155,11 @@ namespace RandomAvatar.Menu
             {
                 CooldownLabel = ModPage.CreateLabel($"{(Cooldown > 0 ? $"Cooldown: {Cooldown}" : "Ready to use")}", Color.white);
             }
-            EverySecond += () =>
-            {
-                if (CooldownLabel != null)
-                {
-                    if (Fusion.IsConnected() && Cooldown > 0)
-                        Cooldown--;
-                    else if (!Fusion.IsConnected())
-                        Cooldown = 0;
-                    if (Fusion.IsConnected())
-                        CooldownLabel.ElementName = $"{(Cooldown > 0 ? $"Cooldown: {Cooldown}" : "Ready to use")}";
-                    else
-                        CooldownLabel.ElementName = string.Empty;
-                }
-            };
             ModPage.CreateLabel($"Version: v{Core.Version}{(Core.IsLatestVersion ? string.Empty : "<br><color=#2EFF2E>(Update Available)</color>")}", Color.white);
         }
 
         internal static FunctionElement IsAllowedLabel;
         internal static FunctionElement FusionDelayLabel;
-
-        internal static KeyValuePair<string, string> SelectedAvatarHistory;
 
         internal static void SetupTagsPage(AvatarCrate crate)
         {
@@ -281,7 +265,7 @@ namespace RandomAvatar.Menu
                 SetupHistoryPage();
             }).SetProperty(ElementProperties.NoBorder);
             HistoryPage.CreateBlank();
-            if (Core._avatarHistory.Count <= 0)
+            if (Core._avatarHistory.Count == 0)
             {
                 HistoryPage.CreateLabel("Nothing to show here :(", Color.white);
             }
@@ -322,9 +306,10 @@ namespace RandomAvatar.Menu
                     return;
                 }
                 Remaining = Delay;
-                if (SwapOnStart) Core.SwapToRandom();
                 _lastDelay = Delay;
                 SwitchEvery = true;
+                if (SwapOnStart)
+                    Core.SwapToRandom();
             };
             _switchEvery.Cancelled += () => SwitchEvery = false;
             if (SwitchEvery) _switchEvery.Start();
@@ -389,6 +374,19 @@ namespace RandomAvatar.Menu
             if (_generalElapsed >= 1f)
             {
                 _generalElapsed = 0f;
+
+                if (CooldownLabel != null)
+                {
+                    if (Fusion.IsConnected() && Cooldown > 0)
+                        Cooldown--;
+                    else if (!Fusion.IsConnected())
+                        Cooldown = 0;
+                    if (Fusion.IsConnected())
+                        CooldownLabel.ElementName = $"{(Cooldown > 0 ? $"Cooldown: {Cooldown}" : "Ready to use")}";
+                    else
+                        CooldownLabel.ElementName = string.Empty;
+                }
+
                 EverySecond?.Invoke();
             }
 

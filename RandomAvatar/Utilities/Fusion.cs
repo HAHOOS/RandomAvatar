@@ -2,6 +2,8 @@
 
 using BoneLib;
 
+using Il2CppSLZ.Marrow;
+
 using RandomAvatar.Menu;
 
 using UnityEngine;
@@ -17,16 +19,6 @@ namespace RandomAvatar.Utilities
 
         internal static Action ServerChanged;
 
-        internal static void Internal_SendPullCordEffect()
-        {
-            LabFusion.Senders.PullCordSender.SendBodyLogEffect();
-        }
-
-        public static void SendPullCordEffect()
-        {
-            if (IsConnected()) Internal_SendPullCordEffect();
-        }
-
         internal static bool Internal_IsConnected()
         {
             return LabFusion.Network.NetworkInfo.HasServer;
@@ -34,7 +26,7 @@ namespace RandomAvatar.Utilities
 
         internal static bool Internal_IsMine(Component comp)
         {
-            return LabFusion.Extensions.ComponentExtensions.IsPartOfSelf(comp) && LabFusion.Extensions.ComponentExtensions.IsPartOfPlayer(comp);
+            return comp.GetComponentInParent<RigManager>() == Player.RigManager;
         }
 
         internal static bool IsMine(Component comp)
@@ -48,14 +40,14 @@ namespace RandomAvatar.Utilities
             if (Core.Entry_AllowRandomAvatarInYourLobbies == null)
                 return;
 
-            if (!LabFusion.Network.NetworkInfo.IsServer)
+            if (!LabFusion.Network.NetworkInfo.IsHost)
                 return;
 
             if (LabFusion.Player.LocalPlayer.Metadata == null)
                 return;
 
-            LabFusion.Player.LocalPlayer.Metadata.TrySetMetadata(Allow_MetadataKey, Core.Entry_AllowRandomAvatarInYourLobbies.Value.ToString());
-            LabFusion.Player.LocalPlayer.Metadata.TrySetMetadata(Delay_MetadataKey, Core.Entry_MinimumFusionDelay.Value.ToString());
+            LabFusion.Player.LocalPlayer.Metadata.Metadata.TrySetMetadata(Allow_MetadataKey, Core.Entry_AllowRandomAvatarInYourLobbies.Value.ToString());
+            LabFusion.Player.LocalPlayer.Metadata.Metadata.TrySetMetadata(Delay_MetadataKey, Core.Entry_MinimumFusionDelay.Value.ToString());
         }
 
         internal static void UpdateMetadata()
@@ -65,9 +57,9 @@ namespace RandomAvatar.Utilities
 
         internal static void Internal_Setup()
         {
-            LabFusion.Utilities.MultiplayerHooking.OnJoinServer += () => ServerChanged?.Invoke();
-            LabFusion.Utilities.MultiplayerHooking.OnStartServer += () => ServerChanged?.Invoke();
-            LabFusion.Utilities.MultiplayerHooking.OnDisconnect += () => ServerChanged?.Invoke();
+            LabFusion.Utilities.MultiplayerHooking.OnJoinedServer += () => ServerChanged?.Invoke();
+            LabFusion.Utilities.MultiplayerHooking.OnStartedServer += () => ServerChanged?.Invoke();
+            LabFusion.Utilities.MultiplayerHooking.OnDisconnected += () => ServerChanged?.Invoke();
         }
 
         internal static int Internal_GetMinimumDelay()
@@ -78,10 +70,10 @@ namespace RandomAvatar.Utilities
             if (!LabFusion.Network.NetworkInfo.HasServer)
                 return DefaultDelay;
 
-            if (!LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(LabFusion.Player.PlayerIdManager.HostSmallId, out LabFusion.Entities.NetworkPlayer player))
+            if (!LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(LabFusion.Player.PlayerIDManager.HostSmallID, out LabFusion.Entities.NetworkPlayer player))
                 return DefaultDelay;
 
-            if (player.PlayerId.Metadata?.TryGetMetadata(Delay_MetadataKey, out string val) == null)
+            if (player.PlayerID.Metadata?.Metadata?.TryGetMetadata(Delay_MetadataKey, out string val) == null)
             {
                 return FusionDelay;
             }
@@ -108,10 +100,10 @@ namespace RandomAvatar.Utilities
 
         internal static bool Internal_IsAllowed()
         {
-            if (!LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(LabFusion.Player.PlayerIdManager.HostSmallId, out LabFusion.Entities.NetworkPlayer player))
+            if (!LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(LabFusion.Player.PlayerIDManager.HostSmallID, out LabFusion.Entities.NetworkPlayer player))
                 return true;
 
-            if (player.PlayerId.Metadata?.TryGetMetadata(Allow_MetadataKey, out string val) == null)
+            if (player.PlayerID.Metadata?.Metadata?.TryGetMetadata(Allow_MetadataKey, out string val) == null)
             {
                 return true;
             }
@@ -133,7 +125,7 @@ namespace RandomAvatar.Utilities
 
         internal static void Internal_EnsureSync()
         {
-            if (!LabFusion.Network.NetworkInfo.IsServer)
+            if (!LabFusion.Network.NetworkInfo.IsHost)
                 return;
 
             if (IsAllowed() != Core.Entry_AllowRandomAvatarInYourLobbies.Value) UpdateMetadata();
