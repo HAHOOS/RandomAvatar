@@ -4,8 +4,6 @@ using System.IO;
 
 using BoneLib;
 
-using Harmony;
-
 using Il2CppSLZ.Bonelab;
 using Il2CppSLZ.Marrow.Warehouse;
 
@@ -25,7 +23,7 @@ namespace RandomAvatar
 {
     public class Core : MelonMod
     {
-        public const string Version = "1.2.1";
+        public const string Version = "1.2.2";
 
         internal static MelonPreferences_Category Preferences_Category { get; private set; }
 
