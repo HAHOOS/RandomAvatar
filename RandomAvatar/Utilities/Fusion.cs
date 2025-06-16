@@ -14,7 +14,7 @@ namespace RandomAvatar.Utilities
     {
         internal const string Allow_MetadataKey = "RandomAvatar.Allow";
         internal const string Delay_MetadataKey = "RandomAvatar.Delay";
-        internal const int FusionDelay = 45;
+        internal const int FusionDelay = 20;
         internal const int DefaultDelay = BoneMenu._rmd;
 
         internal static Action ServerChanged;
@@ -140,13 +140,9 @@ namespace RandomAvatar.Utilities
         public static bool IsConnected()
         {
             if (HelperMethods.CheckIfAssemblyLoaded("labfusion"))
-            {
                 return Internal_IsConnected();
-            }
             else
-            {
                 return false;
-            }
         }
     }
 }

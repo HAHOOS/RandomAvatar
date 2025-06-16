@@ -53,7 +53,6 @@ namespace RandomAvatar
                 var comp = obj.AddComponent<PullCordForceChange>();
                 comp.avatarCrate = new AvatarCrateReference(barcode);
                 comp.rigManager = Player.RigManager;
-                //Fusion.SendPullCordEffect();
                 comp.ForceChange(comp.rigManager.gameObject);
             }
             else

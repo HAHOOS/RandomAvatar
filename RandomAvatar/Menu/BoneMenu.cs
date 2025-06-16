@@ -83,7 +83,7 @@ namespace RandomAvatar.Menu
 #if DEBUG
         internal const int _rmd = 1;
 #else
-        internal const int _rmd = 10;
+        internal const int _rmd = 5;
 #endif
 
         private static int RepeatingMinimumDelay { get { var delay = Fusion.GetMinimumDelay(); if (delay < _rmd) delay = _rmd; return delay; } }
@@ -172,7 +172,7 @@ namespace RandomAvatar.Menu
             else
             {
                 Dictionary<string, int> tags = [];
-                crate.Tags.ForEach((System.Action<string>)(x =>
+                crate.Tags.ForEach((Action<string>)(x =>
                 {
                     if (string.IsNullOrWhiteSpace(x))
                         return;
@@ -291,7 +291,7 @@ namespace RandomAvatar.Menu
 
             RepeatingPage.RemoveAll();
 
-            DelayElement = RepeatingPage.CreateInt("Change Delay", Color.yellow, Delay, 10, RepeatingMinimumDelay, 3600, (v) => Delay = v);
+            DelayElement = RepeatingPage.CreateInt("Change Delay", Color.yellow, Delay, 5, RepeatingMinimumDelay, 3600, (v) => Delay = v);
             FunctionElement remainingElement = null;
             RepeatingPage.CreateBool("Swap on start", Color.red, SwapOnStart, (v) => SwapOnStart = v);
             var _switchEvery = RepeatingPage.CreateToggleFunction("Switch to random avatar every set seconds", Color.white, null);
