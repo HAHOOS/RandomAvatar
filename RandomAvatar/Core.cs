@@ -157,7 +157,7 @@ namespace RandomAvatar
                         IsLatestVersion = ThunderstorePackage.IsLatestVersion(Version);
                         if (!IsLatestVersion)
                         {
-                            LoggerInstance.Msg(System.Drawing.Color.Aqua, $"A new version of RandomAvatar is available: v{ThunderstorePackage.Latest.Version} while the current is v{Version}");
+                            LoggerInstance.Msg(System.ConsoleColor.Cyan, $"A new version of RandomAvatar is available: v{ThunderstorePackage.Latest.Version} while the current is v{Version}");
                         }
                         else
                         {
