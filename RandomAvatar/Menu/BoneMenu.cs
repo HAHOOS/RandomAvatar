@@ -166,7 +166,7 @@ namespace RandomAvatar.Menu
         internal static void SetupTagsPage(AvatarCrate crate)
         {
             BlacklistWhitelist.TagsHandler.SetupPage();
-            BlacklistWhitelist.CleanupPage(AvatarHistoryTagsPage, false);
+            BlacklistWhitelist.CleanupPage(AvatarHistoryTagsPage);
             if (crate.Tags.Count <= 0)
             {
                 AvatarHistoryTagsPage.CreateLabel("Nothing to show here :(", Color.white);

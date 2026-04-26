@@ -39,17 +39,17 @@ namespace RandomAvatar
 
         public MelonPreferences_Entry<List<TConfig>> List { get; internal set; } = category.CreateEntry<List<TConfig>>(entryName, []);
 
-        public bool UseSortMode { get; set; }
+        public bool UseSortMode { get; set; } = true;
 
-        public ViewMode ViewMode { get; set; }
+        public ViewMode ViewMode { get; set; } = ViewMode.All;
 
-        public SortDirection SortDirection { get; set; }
+        public SortDirection SortDirection { get; set; } = SortDirection.Descending;
 
-        public SortMode SortMode { get; set; }
+        public SortMode SortMode { get; set; } = SortMode.Amount;
 
-        public string Search { get; set; }
+        public string Search { get; set; } = string.Empty;
 
-        public string Name { get; set; } = "N/A";
+        public string Name { get; set; } = entryName ?? "N/A";
 
         public Color Color { get; set; } = Color.white;
 
@@ -68,7 +68,7 @@ namespace RandomAvatar
         public void SetupPage()
         {
             Page ??= MainPage.CreatePage(Name, Color, 10);
-            Page.RemoveAll();
+            BlacklistWhitelist.CleanupPage(Page);
             Page.CreateEnum("Sort Direction", Color.yellow, SortDirection, (val) =>
             {
                 SortDirection = (SortDirection)val;
@@ -95,17 +95,21 @@ namespace RandomAvatar
 
             Page.CreateFunction("Add All", new Color(0, 1, 0), () =>
             {
-                GetItems.Invoke().ForEach(x => ChangeList(x, true));
+                GetItems.Invoke().ForEach(x => ChangeList(x, false));
                 SetupPage();
                 Category.SaveToFile(false);
             });
             Page.CreateFunction("Remove All", new Color(0, 1, 0), () =>
             {
-                GetItems.Invoke().ForEach(x => ChangeList(x, false));
+                GetItems.Invoke().ForEach(x => ChangeList(x, true));
                 SetupPage();
                 Category.SaveToFile(false);
             });
             Page.CreateFunction("Refresh", Color.yellow, () => SetupPage());
+            if (!UseSortMode)
+                Page.CreateBlank();
+            Page.CreateBlank();
+            Page.CreateLabel($"Go to the next page to see all the {Name.ToLower()}", Color.white);
             Page.CreateBlank();
 
             bool any = false;
@@ -126,20 +130,20 @@ namespace RandomAvatar
                 {
                     if (OnList(item))
                     {
-                        ChangeList(item, false);
+                        ChangeList(item, true);
                         element.ElementColor = Color.red;
                         if (ViewMode == ViewMode.On) SetupPage();
                     }
                     else
                     {
-                        ChangeList(item, true);
+                        ChangeList(item, false);
                         element.ElementColor = new Color(0, 1, 0);
                         if (ViewMode == ViewMode.Off) SetupPage();
                     }
                     Category.SaveToFile(false);
                 });
             }
-            if (any)
+            if (!any)
                 Page.CreateLabel("Nothing to show here :(", Color.white);
         }
 
@@ -206,7 +210,9 @@ namespace RandomAvatar
                 FetchElementName = (tag) => $"{tag.Tag} [{tag.Count}]",
                 GetConfigItem = (tag) => tag.Tag,
                 GetItems = GetAllTags,
-                GetSearchString = (tag) => tag.Tag
+                GetSearchString = (tag) => tag.Tag,
+                Color = Color.cyan,
+                UseSortMode = true,
             };
             TagsHandler.IsOnList = (crate) => TagsHandler.List.Value.Any(x => crate.Tags.Contains(x));
             FilterHandlers.Add(TagsHandler);
@@ -216,7 +222,9 @@ namespace RandomAvatar
                 FetchElementName = (av) => $"{av.Title}",
                 GetConfigItem = (av) => av.Barcode.ID,
                 GetItems = GetAllAvatars,
-                GetSearchString = (av) => av.Title
+                GetSearchString = (av) => av.Title,
+                Color = Color.magenta,
+                UseSortMode = false,
             };
             AvatarHandler.IsOnList = (crate) => AvatarHandler.List.Value.Any(x => crate.Barcode.ID == x);
             FilterHandlers.Add(AvatarHandler);
@@ -226,9 +234,11 @@ namespace RandomAvatar
                 FetchElementName = (pallet) => $"{pallet.Pallet.Title} [{pallet.Avatars.Count}]",
                 GetConfigItem = (pallet) => pallet.Pallet.Barcode.ID,
                 GetItems = GetAllPallets,
-                GetSearchString = (pallet) => pallet.Pallet.Title
+                GetSearchString = (pallet) => pallet.Pallet.Title,
+                Color = Color.yellow,
+                UseSortMode = true
             };
-            PalletHandler.IsOnList = (crate) => PalletHandler.List.Value.Any(x => crate.Barcode.ID == x);
+            PalletHandler.IsOnList = (crate) => PalletHandler.List.Value.Any(x => crate.Pallet.Barcode.ID == x);
             FilterHandlers.Add(PalletHandler);
 
             Category.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "RandomAvatar.cfg"));
@@ -290,33 +300,18 @@ namespace RandomAvatar
                 return PalletHandler.SortDirection == SortDirection.Ascending ? [.. refs.OrderBy(x => x.Avatars.Count)] : [.. refs.OrderByDescending(x => x.Avatars.Count)];
         }
 
-        public static void CleanupPage(BoneLib.BoneMenu.Page page, bool onlySubPages = false, bool removeSubPages = true, bool removeMainPage = false)
+        public static void CleanupPage(BoneLib.BoneMenu.Page page)
         {
-            Dictionary<BoneLib.BoneMenu.Page, List<Element>> elements = [];
-            page.IndexPages.ForEach(subPage =>
+            page.IndexPages.ForEach(x =>
             {
-                if (subPage != null && subPage.Elements?.Count > 0)
-                {
-                    elements.Add(subPage, [.. subPage.Elements]);
-                }
+                x.RemoveAll();
+
+                // fuck this fuckass code, why the FUCK does it sitll not work
+                // i swear indexed pages are such a pain, just fucking work
+                // why can i not fucking REMOVE them
+                BoneLib.BoneMenu.Menu.DestroyPage(x);
             });
-            foreach (var p in elements)
-            {
-                if (removeSubPages) p.Key.Remove([.. p.Value]);
-                else p.Value.ForEach(x => p.Key.Remove(x));
-            }
-            if (!onlySubPages)
-            {
-                var _elements = new List<Element>(page.Elements);
-                if (removeMainPage)
-                {
-                    page.Remove([.. _elements]);
-                }
-                else
-                {
-                    _elements.ForEach(x => page.Remove(x));
-                }
-            }
+            page.RemoveAll();
         }
 
         public static void RemoveElement(BoneLib.BoneMenu.Page page, Element element, bool removeSubPages = true, bool removeMainPage = false)

@@ -28,7 +28,7 @@ namespace RandomAvatar.Patches
             Core.SwapToRandom();
         }
 
-        private static DateTime _lastDamage = DateTime.Now;
+        private static long _lastDamage = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         private const int _damageDelay = 250; // In milliseconds!!!!
 
         [HarmonyPatch(nameof(Player_Health.TAKEDAMAGE))]
@@ -41,10 +41,10 @@ namespace RandomAvatar.Patches
             if (!Core.SwapOnDamaged)
                 return;
 
-            if ((DateTime.Now - _lastDamage).TotalMilliseconds >= _damageDelay)
+            if ((DateTimeOffset.Now.ToUnixTimeMilliseconds() - _lastDamage) >= _damageDelay)
                 Core.SwapToRandom();
 
-            _lastDamage = DateTime.Now;
+            _lastDamage = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         }
     }
 }

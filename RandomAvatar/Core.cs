@@ -178,12 +178,12 @@ namespace RandomAvatar
                 LoggerInstance.Warning("Fusion was not found");
             }
 
-            LoggerInstance.Msg("Setting up blacklist/whitelist");
-            BlacklistWhitelist.Setup();
-
             LoggerInstance.Msg("Creating BoneMenu");
 
             BoneMenu.Setup();
+
+            LoggerInstance.Msg("Setting up blacklist/whitelist");
+            BlacklistWhitelist.Setup();
 
             LoggerInstance.Msg("Adding hooks");
 
