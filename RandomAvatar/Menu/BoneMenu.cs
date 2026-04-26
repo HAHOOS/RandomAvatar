@@ -155,10 +155,9 @@ namespace RandomAvatar.Menu
 
             ModPage.CreateFunction("Switch to random avatar", Color.white, Core.SwapToRandom);
             if (HelperMethods.CheckIfAssemblyLoaded("labfusion"))
-            {
                 CooldownLabel = ModPage.CreateLabel($"{(Cooldown > 0 ? $"Cooldown: {Cooldown}" : "Ready to use")}", Color.white);
-            }
-            ModPage.CreateLabel($"Version: v{Core.Version}{(Core.IsLatestVersion ? string.Empty : "<br><color=#2EFF2E>(Update Available)</color>")}", Color.white);
+
+            Core.Thunderstore.BL_CreateMenuLabel(ModPage, false);
         }
 
         internal static FunctionElement IsAllowedLabel;
@@ -261,18 +260,18 @@ namespace RandomAvatar.Menu
             BlacklistWhitelist.CleanupPage(HistoryPage);
             HistoryPage.CreateFunction("Clear all", Color.red, () =>
             {
-                Core._avatarHistory.Clear();
+                Core.AvatarHistory.Clear();
                 SetupHistoryPage();
             }).SetProperty(ElementProperties.NoBorder);
             HistoryPage.CreateBlank();
-            if (Core._avatarHistory.Count == 0)
+            if (Core.AvatarHistory.Count == 0)
             {
                 HistoryPage.CreateLabel("Nothing to show here :(", Color.white);
             }
             else
             {
-                Core._avatarHistory = Core._avatarHistory.OrderByDescending(x => x.Key.ToUnixTimeMilliseconds()).ToDictionary(x => x.Key, x => x.Value);
-                Core._avatarHistory.ForEach(y =>
+                Core.AvatarHistory = Core.AvatarHistory.OrderByDescending(x => x.Key.ToUnixTimeMilliseconds()).ToDictionary(x => x.Key, x => x.Value);
+                Core.AvatarHistory.ForEach(y =>
                 {
                     var x = y.Value;
                     HistoryPage.CreateFunction(x.Title, Color.yellow, () =>

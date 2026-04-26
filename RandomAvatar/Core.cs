@@ -15,8 +15,6 @@ using RandomAvatar.Menu;
 using RandomAvatar.Patches;
 using RandomAvatar.Utilities;
 
-using Semver;
-
 using UnityEngine;
 
 namespace RandomAvatar
@@ -34,7 +32,7 @@ namespace RandomAvatar
 
         internal static LevelInfo LevelInfo { get; private set; }
 
-        internal static Dictionary<DateTimeOffset, AvatarCrate> _avatarHistory = [];
+        internal static Dictionary<DateTimeOffset, AvatarCrate> AvatarHistory { get; set; } = [];
 
         public static void SwapAvatar(string barcode, bool usePCFC)
         {
@@ -63,7 +61,8 @@ namespace RandomAvatar
 
         public static Barcode RandomAvatar()
         {
-            if (BlacklistWhitelist.Enabled.Value && ((BlacklistWhitelist.TagsList.Value == null || BlacklistWhitelist.TagsList.Value.Count == 0) && (BlacklistWhitelist.AvatarList.Value == null || BlacklistWhitelist.AvatarList.Value.Count == 0) && (BlacklistWhitelist.PalletList.Value == null || BlacklistWhitelist.PalletList.Value.Count == 0)))
+            if (BlacklistWhitelist.Enabled.Value &&
+                BlacklistWhitelist.FilterHandlers.TrueForAll(x => x.IsEmpty()))
             {
                 BLHelper.SendNotification("Failure", "When having blacklist/whitelist enabled, you need to have at least one tag, avatar and/or pallet selected!", true, 3f, BoneLib.Notifications.NotificationType.Error);
                 Logger.Error("Cannot swap to random avatar. When having blacklist/whitelist enabled, you need to have at least one tag, avatar and/or pallet selected!");
@@ -80,7 +79,7 @@ namespace RandomAvatar
                 return false;
             }));
             var avatar = avatars[r.Next(avatars.Count)];
-            _avatarHistory.Add(DateTimeOffset.Now, avatar);
+            AvatarHistory.Add(DateTimeOffset.Now, avatar);
             BoneMenu.SetupHistoryPage();
             return avatar.Barcode;
         }
@@ -139,9 +138,7 @@ namespace RandomAvatar
                 postfix: new HarmonyLib.HarmonyMethod(typeof(FusionPatches).GetMethod(nameof(FusionPatches.Postfix))));
         }
 
-        internal static Thunderstore Thunderstore;
-        internal static Package ThunderstorePackage;
-        internal static bool IsLatestVersion = false;
+        internal static Thunderstore Thunderstore { get; set; }
 
         public override void OnInitializeMelon()
         {
@@ -149,37 +146,7 @@ namespace RandomAvatar
             try
             {
                 Thunderstore = new Thunderstore($"RandomAvatar / {Version} A BONELAB Code Mod");
-                ThunderstorePackage = Thunderstore.GetPackage("HAHOOS", "RandomAvatar");
-                if (ThunderstorePackage != null)
-                {
-                    if (ThunderstorePackage.Latest != null && !string.IsNullOrWhiteSpace(ThunderstorePackage.Latest.Version))
-                    {
-                        IsLatestVersion = ThunderstorePackage.IsLatestVersion(Version);
-                        if (!IsLatestVersion)
-                        {
-                            LoggerInstance.Msg(System.ConsoleColor.Cyan, $"A new version of RandomAvatar is available: v{ThunderstorePackage.Latest.Version} while the current is v{Version}");
-                        }
-                        else
-                        {
-                            if (SemVersion.Parse(Version) == ThunderstorePackage.Latest.SemVersion)
-                            {
-                                LoggerInstance.Msg($"Latest version of RandomAvatar is installed! --> v{Version}");
-                            }
-                            else
-                            {
-                                LoggerInstance.Msg($"Beta release of RandomAvatar is installed (v{ThunderstorePackage.Latest.Version} is newest, v{Version} is installed)");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        LoggerInstance.Error("Latest version could not be found or the version is empty");
-                    }
-                }
-                else
-                {
-                    LoggerInstance.Error("Could not find Thunderstore package for RandomAvatar");
-                }
+                Thunderstore.BL_FetchPackage("RandomAvatar", "HAHOOS", Version, LoggerInstance);
             }
             catch (Exception ex)
             {
@@ -230,8 +197,16 @@ namespace RandomAvatar
             LoggerInstance.Msg("Initialized.");
         }
 
+        private static bool FirstLoad { get; set; } = true;
+
         internal static void LevelLoaded()
         {
+            if (FirstLoad)
+            {
+                FirstLoad = false;
+                Thunderstore.BL_SendNotification();
+            }
+
             if (SwapOnLevelChange || SwapOnNextLevelChange)
             {
                 if (PlayerRefs.Instance == null)

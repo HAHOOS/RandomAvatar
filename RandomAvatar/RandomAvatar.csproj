@@ -8,53 +8,54 @@
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>$(SolutionDir)\key.snk</AssemblyOriginatorKeyFile>
 
-		<GameDirectory>C:\Oculus\Software\stress-level-zero-inc-bonelab</GameDirectory>
-
 	</PropertyGroup>
 
 	<ItemGroup>
 		<Reference Include="Assembly-CSharp">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
 		</Reference>
 		<Reference Include="BoneLib">
-			<HintPath>$(GameDirectory)\Mods\BoneLib.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\Mods\BoneLib.dll</HintPath>
 		</Reference>
 		<Reference Include="Il2CppInterop.Runtime">
-			<HintPath>$(GameDirectory)\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
 		</Reference>
 		<Reference Include="Il2Cppmscorlib">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
 		</Reference>
 		<Reference Include="Il2CppSLZ.Marrow">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppSLZ.Marrow.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Il2CppSLZ.Marrow.dll</HintPath>
 		</Reference>
 		<Reference Include="Il2CppSystem.Core">
-		  <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppSystem.Core.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Il2CppSystem.Core.dll</HintPath>
 		</Reference>
 		<Reference Include="Il2CppUniTask">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppUniTask.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Il2CppUniTask.dll</HintPath>
 		</Reference>
 		<Reference Include="LabFusion">
-			<HintPath>$(GameDirectory)\Mods\LabFusion.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\Mods\LabFusion.dll</HintPath>
 		</Reference>
 		<Reference Include="MelonLoader">
-			<HintPath>$(GameDirectory)\MelonLoader\net6\MelonLoader.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\MelonLoader.dll</HintPath>
+		</Reference>
+		<Reference Include="Newtonsoft.Json">
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\Newtonsoft.Json.dll</HintPath>
 		</Reference>
 		<Reference Include="Tomlet">
-			<HintPath>$(GameDirectory)\MelonLoader\net6\Tomlet.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\Tomlet.dll</HintPath>
 		</Reference>
 		<Reference Include="0Harmony">
-			<HintPath>$(GameDirectory)\MelonLoader\net6\0Harmony.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\0Harmony.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.CoreModule">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
 		</Reference>
 		<Reference Include="Unity.TextMeshPro">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Unity.TextMeshPro.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Unity.TextMeshPro.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="COPY &quot;$(TargetPath)&quot; &quot;$(GameDirectory)\Mods&quot;" />
+		<Exec Command="COPY &quot;$(TargetPath)&quot; &quot;$(BONELAB_DIR)\Mods&quot;" />
 	</Target>
 </Project>

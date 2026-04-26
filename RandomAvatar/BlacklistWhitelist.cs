@@ -24,6 +24,8 @@ namespace RandomAvatar
     {
         public Func<AvatarCrate, bool> IsOnList { get; set; }
 
+        public abstract bool IsEmpty();
+
         public abstract void SetupPage();
     }
 
@@ -140,6 +142,9 @@ namespace RandomAvatar
             if (any)
                 Page.CreateLabel("Nothing to show here :(", Color.white);
         }
+
+        public bool IsEmpty()
+            => List.Value == null || List.Value.Count == 0;
 
         private void ChangeList(T item, bool remove)
         {
