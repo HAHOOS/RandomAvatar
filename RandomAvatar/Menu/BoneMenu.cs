@@ -180,11 +180,11 @@ namespace RandomAvatar.Menu
                     if (string.IsNullOrWhiteSpace(x))
                         return;
 
-                    int amount = BlacklistWhitelist.GetAllTags(SortMode.Alphabetical, SortDirection.Descending, true).FirstOrDefault(y => y.Tag == x)?.Count ?? 0;
+                    int amount = BlacklistWhitelist.GetAllTags().FirstOrDefault(y => y.Tag == x)?.Count ?? 0;
                     tags.Add(x, amount);
                 }));
                 tags = tags.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-                tags.ForEach((System.Action<KeyValuePair<string, int>>)(x =>
+                tags.ForEach(x =>
                 {
                     FunctionElement element = null;
                     element = AvatarHistoryTagsPage.CreateFunction($"{x.Key} [{x.Value}]", BlacklistWhitelist.TagsHandler.List.Value.Contains(x.Key) ? new Color(0, 1, 0) : Color.red, () =>
@@ -201,7 +201,7 @@ namespace RandomAvatar.Menu
                         }
                         BlacklistWhitelist.Category.SaveToFile(false);
                     });
-                }));
+                });
             }
         }
 
@@ -214,7 +214,7 @@ namespace RandomAvatar.Menu
             AvatarHistoryPage.CreateFunction(crate.Barcode.ID, Color.white, null);
             AvatarHistoryPage.CreateFunction("Change into avatar", Color.cyan, () => Core.SwapAvatar(crate.Barcode.ID, Core.Entry_EffectWhenSwitching.Value));
             FunctionElement palletElement = null;
-            palletElement = AvatarHistoryPage.CreateFunction($"{crate.Pallet.Title} [{BlacklistWhitelist.GetAllPallets(SortMode.Amount, SortDirection.Descending, true).FirstOrDefault(x => x.Pallet.Barcode == crate.Pallet.Barcode).Avatars.Count.ToString() ?? "0"}]", BlacklistWhitelist.PalletHandler.List.Value.Contains(crate.Pallet.Barcode.ID) ? new Color(0, 1, 0) : Color.red, () =>
+            palletElement = AvatarHistoryPage.CreateFunction($"{crate.Pallet.Title} [{BlacklistWhitelist.GetAllPallets().FirstOrDefault(x => x.Pallet.Barcode == crate.Pallet.Barcode).Avatars.Count.ToString() ?? "0"}]", BlacklistWhitelist.PalletHandler.List.Value.Contains(crate.Pallet.Barcode.ID) ? new Color(0, 1, 0) : Color.red, () =>
             {
                 if (BlacklistWhitelist.PalletHandler.List.Value.Contains(crate.Pallet.Barcode.ID))
                 {

@@ -59,7 +59,7 @@ namespace RandomAvatar
 
         public Func<T, string> FetchElementName;
 
-        public Func<SortMode, SortDirection, bool, T[]> GetItems;
+        public Func<T[]> GetItems;
 
         public Func<AvatarCrate, bool> IsOnList { get; set; }
 
@@ -93,13 +93,13 @@ namespace RandomAvatar
 
             Page.CreateFunction("Add All", new Color(0, 1, 0), () =>
             {
-                GetItems.Invoke(SortMode, SortDirection, UseSortMode).ForEach(x => ChangeList(x, true));
+                GetItems.Invoke().ForEach(x => ChangeList(x, true));
                 SetupPage();
                 Category.SaveToFile(false);
             });
             Page.CreateFunction("Remove All", new Color(0, 1, 0), () =>
             {
-                GetItems.Invoke(SortMode, SortDirection, UseSortMode).ForEach(x => ChangeList(x, false));
+                GetItems.Invoke().ForEach(x => ChangeList(x, false));
                 SetupPage();
                 Category.SaveToFile(false);
             });
@@ -108,7 +108,7 @@ namespace RandomAvatar
 
             bool any = false;
 
-            foreach (var item in GetItems.Invoke(SortMode, SortDirection, UseSortMode))
+            foreach (var item in GetItems.Invoke())
             {
                 if (item == null) return;
                 if (!DoesViewModeAllow(List.Value, GetConfigItem(item), ViewMode)
@@ -230,7 +230,7 @@ namespace RandomAvatar
             Category.SaveToFile(false);
         }
 
-        public static AvatarTag[] GetAllTags(SortMode mode, SortDirection direction, bool useMode)
+        public static AvatarTag[] GetAllTags()
         {
             if (!AssetWarehouse.ready)
                 return [];
@@ -249,13 +249,13 @@ namespace RandomAvatar
                 }));
             }));
 
-            if (mode == SortMode.Amount)
-                return [.. direction == SortDirection.Ascending ? tags.OrderBy(x => x.Count) : tags.OrderByDescending(x => x.Count)];
+            if (TagsHandler.SortMode == SortMode.Amount)
+                return [.. TagsHandler.SortDirection == SortDirection.Ascending ? tags.OrderBy(x => x.Count) : tags.OrderByDescending(x => x.Count)];
             else
-                return [.. direction == SortDirection.Ascending ? tags.OrderBy(x => x.Tag) : tags.OrderByDescending(x => x.Tag)];
+                return [.. TagsHandler.SortDirection == SortDirection.Ascending ? tags.OrderBy(x => x.Tag) : tags.OrderByDescending(x => x.Tag)];
         }
 
-        public static AvatarCrate[] GetAllAvatars(SortMode mode, SortDirection direction, bool useMode)
+        public static AvatarCrate[] GetAllAvatars()
         {
             if (!AssetWarehouse.ready)
                 return [];
@@ -264,10 +264,10 @@ namespace RandomAvatar
             if (!Core.Entry_UseRedacted.Value)
                 _avatars.RemoveAll((Il2CppSystem.Predicate<AvatarCrate>)(x => x.Redacted));
             var avatarsList = _avatars.ToArray().ToList();
-            return direction == SortDirection.Ascending ? [.. avatarsList.OrderBy(x => x.Title)] : [.. avatarsList.OrderByDescending(x => x.Title)];
+            return AvatarHandler.SortDirection == SortDirection.Ascending ? [.. avatarsList.OrderBy(x => x.Title)] : [.. avatarsList.OrderByDescending(x => x.Title)];
         }
 
-        public static PalletRef[] GetAllPallets(SortMode mode, SortDirection direction, bool useMode)
+        public static PalletRef[] GetAllPallets()
         {
             if (!AssetWarehouse.ready)
                 return [];
@@ -279,10 +279,10 @@ namespace RandomAvatar
                 if (@ref?.Pallet != null && @ref.Avatars?.Count > 0)
                     refs.Add(@ref);
             }
-            if (mode == SortMode.Alphabetical)
-                return direction == SortDirection.Ascending ? [.. refs.OrderBy(x => x.Pallet.Title)] : [.. refs.OrderByDescending(x => x.Pallet.Title)];
+            if (PalletHandler.SortMode == SortMode.Alphabetical)
+                return PalletHandler.SortDirection == SortDirection.Ascending ? [.. refs.OrderBy(x => x.Pallet.Title)] : [.. refs.OrderByDescending(x => x.Pallet.Title)];
             else
-                return direction == SortDirection.Ascending ? [.. refs.OrderBy(x => x.Avatars.Count)] : [.. refs.OrderByDescending(x => x.Avatars.Count)];
+                return PalletHandler.SortDirection == SortDirection.Ascending ? [.. refs.OrderBy(x => x.Avatars.Count)] : [.. refs.OrderByDescending(x => x.Avatars.Count)];
         }
 
         public static void CleanupPage(BoneLib.BoneMenu.Page page, bool onlySubPages = false, bool removeSubPages = true, bool removeMainPage = false)
