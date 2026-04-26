@@ -32,12 +32,14 @@ namespace RandomAvatar.Menu
         public static Page SettingsPage { get; private set; }
 
         /// <summary>
-        /// SubPage of <see cref="ModPage"/>, which contains settings and toggle button for repeated avatar changes which happen every set seconds
+        /// SubPage of <see cref="ModPage"/>, which contains settings and toggle button for repeated avatar changes
+        /// which happen every set seconds
         /// </summary>
         public static Page RepeatingPage { get; private set; }
 
         /// <summary>
-        /// SubPage of <see cref="ModPage"/>, which contains page for challenges such as changing avatar when you die or change levels
+        /// SubPage of <see cref="ModPage"/>, which contains page for challenges such as changing avatar when you die or
+        /// change levels
         /// </summary>
         public static Page ChallengesPage { get; private set; }
 
@@ -52,7 +54,8 @@ namespace RandomAvatar.Menu
         public static Page HistoryPage { get; private set; }
 
         /// <summary>
-        /// SubPage of <see cref="HistoryPage"/>, which contains information about a selected avatar in <see cref="HistoryPage"/>
+        /// SubPage of <see cref="HistoryPage"/>, which contains information about a selected avatar in
+        /// <see cref="HistoryPage"/>
         /// </summary>
         public static Page AvatarHistoryPage { get; private set; }
 
@@ -163,7 +166,7 @@ namespace RandomAvatar.Menu
 
         internal static void SetupTagsPage(AvatarCrate crate)
         {
-            BlacklistWhitelist.SetupTagsPage();
+            BlacklistWhitelist.TagsHandler.SetupPage();
             BlacklistWhitelist.CleanupPage(AvatarHistoryTagsPage, false);
             if (crate.Tags.Count <= 0)
             {
@@ -177,26 +180,23 @@ namespace RandomAvatar.Menu
                     if (string.IsNullOrWhiteSpace(x))
                         return;
 
-                    //if (!BlacklistWhitelist.Tags.ContainsKey(x))
-                    //    return;
-
-                    int amount = BlacklistWhitelist.Tags.ContainsKey(x) ? BlacklistWhitelist.Tags[x] : 0;
+                    int amount = BlacklistWhitelist.GetAllTags(SortMode.Alphabetical, SortDirection.Descending, true).FirstOrDefault(y => y.Tag == x)?.Count ?? 0;
                     tags.Add(x, amount);
                 }));
                 tags = tags.OrderByDescending(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
                 tags.ForEach((System.Action<KeyValuePair<string, int>>)(x =>
                 {
                     FunctionElement element = null;
-                    element = AvatarHistoryTagsPage.CreateFunction($"{x.Key} [{x.Value}]", BlacklistWhitelist.TagsList.Value.Contains(x.Key) ? new Color(0, 1, 0) : Color.red, () =>
+                    element = AvatarHistoryTagsPage.CreateFunction($"{x.Key} [{x.Value}]", BlacklistWhitelist.TagsHandler.List.Value.Contains(x.Key) ? new Color(0, 1, 0) : Color.red, () =>
                     {
-                        if (BlacklistWhitelist.TagsList.Value.Contains(x.Key))
+                        if (BlacklistWhitelist.TagsHandler.List.Value.Contains(x.Key))
                         {
-                            BlacklistWhitelist.TagsList.Value.Remove(x.Key);
+                            BlacklistWhitelist.TagsHandler.List.Value.Remove(x.Key);
                             element.ElementColor = Color.red;
                         }
                         else
                         {
-                            BlacklistWhitelist.TagsList.Value.Add(x.Key);
+                            BlacklistWhitelist.TagsHandler.List.Value.Add(x.Key);
                             element.ElementColor = new Color(0, 1, 0);
                         }
                         BlacklistWhitelist.Category.SaveToFile(false);
@@ -207,23 +207,23 @@ namespace RandomAvatar.Menu
 
         internal static void SetupPageForAvatar(DateTimeOffset offset, AvatarCrate crate)
         {
-            BlacklistWhitelist.SetupPalletsPage();
+            BlacklistWhitelist.PalletHandler.SetupPage();
             AvatarHistoryPage.Name = crate.Title;
             AvatarHistoryPage.RemoveAll();
             AvatarHistoryPage.CreateFunction(crate.Title, Color.white, null);
             AvatarHistoryPage.CreateFunction(crate.Barcode.ID, Color.white, null);
             AvatarHistoryPage.CreateFunction("Change into avatar", Color.cyan, () => Core.SwapAvatar(crate.Barcode.ID, Core.Entry_EffectWhenSwitching.Value));
             FunctionElement palletElement = null;
-            palletElement = AvatarHistoryPage.CreateFunction($"{crate.Pallet.Title} [{BlacklistWhitelist.PalletRefs.FirstOrDefault(x => x.Pallet.Barcode == crate.Pallet.Barcode).Avatars.Count.ToString() ?? "0"}]", BlacklistWhitelist.PalletList.Value.Contains(crate.Pallet.Barcode.ID) ? new Color(0, 1, 0) : Color.red, () =>
+            palletElement = AvatarHistoryPage.CreateFunction($"{crate.Pallet.Title} [{BlacklistWhitelist.GetAllPallets(SortMode.Amount, SortDirection.Descending, true).FirstOrDefault(x => x.Pallet.Barcode == crate.Pallet.Barcode).Avatars.Count.ToString() ?? "0"}]", BlacklistWhitelist.PalletHandler.List.Value.Contains(crate.Pallet.Barcode.ID) ? new Color(0, 1, 0) : Color.red, () =>
             {
-                if (BlacklistWhitelist.PalletList.Value.Contains(crate.Pallet.Barcode.ID))
+                if (BlacklistWhitelist.PalletHandler.List.Value.Contains(crate.Pallet.Barcode.ID))
                 {
-                    BlacklistWhitelist.PalletList.Value.Remove(crate.Pallet.Barcode.ID);
+                    BlacklistWhitelist.PalletHandler.List.Value.Remove(crate.Pallet.Barcode.ID);
                     palletElement.ElementColor = Color.red;
                 }
                 else
                 {
-                    BlacklistWhitelist.PalletList.Value.Add(crate.Pallet.Barcode.ID);
+                    BlacklistWhitelist.PalletHandler.List.Value.Add(crate.Pallet.Barcode.ID);
                     palletElement.ElementColor = new Color(0, 1, 0);
                 }
                 BlacklistWhitelist.Category.SaveToFile(false);
@@ -235,17 +235,17 @@ namespace RandomAvatar.Menu
             });
             AvatarHistoryPage.CreateFunction($"Time: {offset:T}", Color.white, null);
             FunctionElement element = null;
-            element = AvatarHistoryPage.CreateFunction(BlacklistWhitelist.AvatarList.Value.Contains(crate.Barcode.ID) ? (BlacklistWhitelist.IsWhitelist.Value ? "Whitelisted" : "Blacklisted") : (BlacklistWhitelist.IsWhitelist.Value ? "Not Whitelisted" : "Not Blacklisted"), BlacklistWhitelist.AvatarList.Value.Contains(crate.Barcode.ID) ? new Color(0, 1, 0) : Color.red, () =>
+            element = AvatarHistoryPage.CreateFunction(BlacklistWhitelist.AvatarHandler.List.Value.Contains(crate.Barcode.ID) ? (BlacklistWhitelist.IsWhitelist.Value ? "Whitelisted" : "Blacklisted") : (BlacklistWhitelist.IsWhitelist.Value ? "Not Whitelisted" : "Not Blacklisted"), BlacklistWhitelist.AvatarHandler.List.Value.Contains(crate.Barcode.ID) ? new Color(0, 1, 0) : Color.red, () =>
             {
-                if (BlacklistWhitelist.AvatarList.Value.Contains(crate.Barcode.ID))
+                if (BlacklistWhitelist.AvatarHandler.List.Value.Contains(crate.Barcode.ID))
                 {
-                    BlacklistWhitelist.AvatarList.Value.Remove(crate.Barcode.ID);
+                    BlacklistWhitelist.AvatarHandler.List.Value.Remove(crate.Barcode.ID);
                     element.ElementName = BlacklistWhitelist.IsWhitelist.Value ? "Not Whitelisted" : "Not Blacklisted";
                     element.ElementColor = Color.red;
                 }
                 else
                 {
-                    BlacklistWhitelist.AvatarList.Value.Add(crate.Barcode.ID);
+                    BlacklistWhitelist.AvatarHandler.List.Value.Add(crate.Barcode.ID);
                     element.ElementName = BlacklistWhitelist.IsWhitelist.Value ? "Whitelisted" : "Blacklisted";
                     element.ElementColor = new Color(0, 1, 0);
                 }

@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "RandomAvatar": {
+      "commandName": "Project"
+    },
+    "BONELAB": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Oculus\\Software\\stress-level-zero-inc-bonelab\\BONELAB_Oculus_Windows64.exe",
+      "workingDirectory": "C:\\Oculus\\Software\\stress-level-zero-inc-bonelab"
+    }
+  }
+}
