@@ -21,7 +21,7 @@ namespace RandomAvatar
 {
     public class Core : MelonMod
     {
-        public const string Version = "1.2.2";
+        public const string Version = "1.3.0";
 
         internal static MelonPreferences_Category Preferences_Category { get; private set; }
 
